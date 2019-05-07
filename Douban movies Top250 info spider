@@ -1,0 +1,33 @@
+import requests
+from pyquery import PyQuery as pq
+import json
+import time
+
+def parse_one_page(html):
+    doc = pq(html)
+    for i in doc('.item').items():
+        yield {
+            'order': i.find('.pic em').text(),
+            'name': i.find('.title:first-child').text(),
+            'details': i.find('.bd p:first-child').text(),
+            'score': i.find('.star span:nth-child(2)').text(),
+            'quote': i.find('.bd p:last-child').text()
+        }
+
+def write_to_file(content):
+    with open('豆瓣电影Top250.txt', 'a', encoding='utf-8') as file:
+        file.write(json.dumps(content, ensure_ascii=False) + '\n')
+
+def main(start):
+    url = 'https://movie.douban.com/top250?start='+ str(start) + '&filter='
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.25 Safari/537.36 Core/1.70.3676.400 QQBrowser/10.4.3469.400'
+    }
+    html = requests.get(url, headers=headers).text
+    for content in parse_one_page(html):
+        write_to_file(content)
+
+if __name__ == '__main__':
+    for s in range(10):
+        main(start=s * 25)
+        time.sleep(2)
